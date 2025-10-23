@@ -26,11 +26,11 @@ window.addEventListener('message', function (event) {
         console.log("新的分數已接收:", scoreText); 
         
         // ----------------------------------------
-        // 關鍵步驟 2: 呼叫重新繪製 (見方案二)
+        // 關鍵步驟 2: 呼叫重新繪製 (此處不需要 if (typeof redraw === 'function'))
+        // 由於我們讓 draw() 持續運行 (loop)，所以這裡不需要特別呼叫 redraw()
+        // 但如果您的環境強制了 noLoop，那麼保留 redraw() 也可以。
+        // 為確保動畫流暢，我們將依賴 draw() 的持續運行。
         // ----------------------------------------
-        if (typeof redraw === 'function') {
-            redraw(); 
-        }
     }
 }, false);
 
@@ -39,7 +39,7 @@ window.addEventListener('message', function (event) {
 // 步驟二：p5.js 繪製分數與動畫
 // -----------------------------------------------------------------
 
-// *** 新增：Particle 類別 (用於煙火顆粒) ***
+// *** Particle 類別 (用於煙火顆粒) ***
 class Particle {
     constructor(x, y, color) {
         this.pos = createVector(x, y);
@@ -76,17 +76,15 @@ class Particle {
 
 
 function setup() { 
-    // 建立 Canvas，注意：Canvas 預設是透明的，但我們要在 draw 裡面處理背景清除
+    // 建立 Canvas
     createCanvas(windowWidth / 2, windowHeight / 2); 
-    // 讓 Canvas 本身就是透明的，以便看到網頁背景
-    // 但在 draw 函數中，我們還是要使用半透明的背景色來實現拖尾效果
+    // 預設是 loop()，讓 draw() 持續執行，這是動畫的基礎！
+    // 除非您明確呼叫 noLoop()，否則 p5.js 會自動持續執行 draw()。
 } 
 
 function draw() { 
     // *** 調整一：讓背景透明，並保持拖尾效果 ***
-    // 使用透明度為 0 的白色來「清除」畫布，這樣可以讓它保持透明，
-    // 同時讓前一幀的粒子痕跡快速淡出（如果 alpha > 0）。
-    // 為了視覺上完全透明（無拖尾），我們將 alpha 設為 0。
+    // 這裡我們維持 alpha = 0，讓背景完全透明。
     background(255, 255, 255, 0); 
 
     // 計算百分比
@@ -107,10 +105,10 @@ function draw() {
         fill(255, 165, 0); // 橘色
         text("!!! 完美分數，放煙火囉 !!!", width / 2, height / 2 - 50);
         
-        // *** 調整二：煙火發射位置限制在畫面上半部 ***
-        if (random(1) < 0.1) { // 調整這個值來改變發射頻率
+        // 煙火生成邏輯：這部分是正確的，因為 draw() 迴圈持續運行，
+        // 所以 random(1) < 0.1 會持續觸發新煙火的生成。
+        if (random(1) < 0.1) { 
             let x = random(width / 4, width * 3 / 4);
-            // 將 Y 座標限制在畫面的 1/8 到 1/2 之間
             let y = random(height / 8, height / 2); 
             let fireworkColor = [random(100, 255), random(100, 255), random(100, 255)];
             
