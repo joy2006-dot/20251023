@@ -18,19 +18,20 @@ window.addEventListener('message', function (event) {
     
     if (data && data.type === 'H5P_SCORE_RESULT') {
         
-        // !!! 關鍵步驟：更新全域變數 !!!
+        // !!! 關鍵步驟 1：更新全域變數 !!!
         finalScore = data.score; // 更新全域變數
         maxScore = data.maxScore;
         scoreText = `最終成績分數: ${finalScore}/${maxScore}`;
         
-        console.log("新的分數已接收:", scoreText); 
+        // ----------------------------------------
+        // 關鍵修正：收到成績後，顯示 p5.js 畫面
+        // ----------------------------------------
+        const canvasContainer = document.getElementById('p5-canvas-container');
+        if (canvasContainer) {
+            canvasContainer.style.display = 'block'; // 將畫面從 hidden 變為 block
+        }
         
-        // ----------------------------------------
-        // 關鍵步驟 2: 呼叫重新繪製 (此處不需要 if (typeof redraw === 'function'))
-        // 由於我們讓 draw() 持續運行 (loop)，所以這裡不需要特別呼叫 redraw()
-        // 但如果您的環境強制了 noLoop，那麼保留 redraw() 也可以。
-        // 為確保動畫流暢，我們將依賴 draw() 的持續運行。
-        // ----------------------------------------
+        console.log("新的分數已接收:", scoreText); 
     }
 }, false);
 
@@ -76,15 +77,22 @@ class Particle {
 
 
 function setup() { 
-    // 建立 Canvas
-    createCanvas(windowWidth / 2, windowHeight / 2); 
-    // 預設是 loop()，讓 draw() 持續執行，這是動畫的基礎！
-    // 除非您明確呼叫 noLoop()，否則 p5.js 會自動持續執行 draw()。
+    // 修正：讓 Canvas 覆蓋整個容器/視窗
+    let canvas = createCanvas(windowWidth, windowHeight); 
+    
+    // *** 新增：將 Canvas 附加到指定的容器 ***
+    // 這是讓 CSS 定位 (#p5-canvas-container) 生效的關鍵
+    canvas.parent('p5-canvas-container'); 
 } 
 
+// 當視窗大小改變時，重新調整 Canvas 大小以保持全屏覆蓋
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+}
+
+
 function draw() { 
-    // *** 調整一：讓背景透明，並保持拖尾效果 ***
-    // 這裡我們維持 alpha = 0，讓背景完全透明。
+    // 讓背景完全透明 (alpha=0)，避免覆蓋 H5P 內容
     background(255, 255, 255, 0); 
 
     // 計算百分比
@@ -105,14 +113,11 @@ function draw() {
         fill(255, 165, 0); // 橘色
         text("!!! 完美分數，放煙火囉 !!!", width / 2, height / 2 - 50);
         
-        // 煙火生成邏輯：這部分是正確的，因為 draw() 迴圈持續運行，
-        // 所以 random(1) < 0.1 會持續觸發新煙火的生成。
-        if (random(1) < 0.1) { 
+        if (random(1) < 0.1) { // 調整這個值來改變發射頻率
             let x = random(width / 4, width * 3 / 4);
             let y = random(height / 8, height / 2); 
             let fireworkColor = [random(100, 255), random(100, 255), random(100, 255)];
             
-            // 每次發射 30 個粒子
             for (let i = 0; i < 30; i++) {
                 fireworks.push(new Particle(x, y, fireworkColor));
             }
@@ -152,7 +157,6 @@ function draw() {
     // C. 煙火動畫渲染與更新
     // -----------------------------------------------------------------
     
-    // 應用重力 (模擬粒子下落)
     let gravity = createVector(0, 0.1); 
 
     for (let i = fireworks.length - 1; i >= 0; i--) {
@@ -162,7 +166,6 @@ function draw() {
         p.update();
         p.show();
         
-        // 如果粒子壽命結束，從陣列中移除
         if (p.done()) {
             fireworks.splice(i, 1);
         }
