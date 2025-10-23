@@ -28,8 +28,6 @@ window.addEventListener('message', function (event) {
         // ----------------------------------------
         // 關鍵步驟 2: 呼叫重新繪製 (見方案二)
         // ----------------------------------------
-        // 由於我們改用 loop 來實現煙火動畫，這裡的 redraw() 變得非必要，
-        // 但保留它可以在非煙火模式下更新畫面。
         if (typeof redraw === 'function') {
             redraw(); 
         }
@@ -78,16 +76,18 @@ class Particle {
 
 
 function setup() { 
-    // ... (其他設置)
+    // 建立 Canvas，注意：Canvas 預設是透明的，但我們要在 draw 裡面處理背景清除
     createCanvas(windowWidth / 2, windowHeight / 2); 
-    background(255); 
-    // !!! 為了煙火動畫，移除或註釋 noLoop() !!!
-    // noLoop(); 
+    // 讓 Canvas 本身就是透明的，以便看到網頁背景
+    // 但在 draw 函數中，我們還是要使用半透明的背景色來實現拖尾效果
 } 
 
 function draw() { 
-    // 使用半透明背景來創造拖尾效果，模擬煙火 [9]
-    background(255, 255, 255, 50); 
+    // *** 調整一：讓背景透明，並保持拖尾效果 ***
+    // 使用透明度為 0 的白色來「清除」畫布，這樣可以讓它保持透明，
+    // 同時讓前一幀的粒子痕跡快速淡出（如果 alpha > 0）。
+    // 為了視覺上完全透明（無拖尾），我們將 alpha 設為 0。
+    background(255, 255, 255, 0); 
 
     // 計算百分比
     let percentage = 0;
@@ -107,11 +107,11 @@ function draw() {
         fill(255, 165, 0); // 橘色
         text("!!! 完美分數，放煙火囉 !!!", width / 2, height / 2 - 50);
         
-        // *** 核心：煙火發射邏輯 ***
-        // 隨機發射一個煙火
+        // *** 調整二：煙火發射位置限制在畫面上半部 ***
         if (random(1) < 0.1) { // 調整這個值來改變發射頻率
             let x = random(width / 4, width * 3 / 4);
-            let y = random(height / 4, height * 3 / 4);
+            // 將 Y 座標限制在畫面的 1/8 到 1/2 之間
+            let y = random(height / 8, height / 2); 
             let fireworkColor = [random(100, 255), random(100, 255), random(100, 255)];
             
             // 每次發射 30 個粒子
